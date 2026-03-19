@@ -417,7 +417,7 @@ function populateAllFilters() {
 
 async function loadCSV() {
   try {
-    const resp = await fetch('vehicules.csv');
+    const resp = await fetch('vehicules.csv?t=' + Date.now());
     const text = await resp.text();
     const lines = text.trim().split('\n');
     const headers = lines[0].split(',');

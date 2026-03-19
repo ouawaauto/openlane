@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>OPENLANE — Véhicules Vendus</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0f14;
+  --surface: #161921;
+  --surface2: #1e2330;
+  --border: #2a3040;
+  --accent: #f59e0b;
+  --text: #e8eaf0;
+  --muted: #7a8299;
+  --green: #22c55e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Barlow', sans-serif; font-size: 14px; min-height: 100vh; }
+
+header {
+  background: linear-gradient(135deg, #0d0f14, #1a1f2e);
+  border-bottom: 3px solid var(--accent);
+  padding: 16px 20px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+}
+.logo { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 26px; letter-spacing: 2px; color: var(--accent); }
+.logo span { color: var(--text); }
+.header-stats { display: flex; gap: 20px; }
+.stat { text-align: center; }
+.stat-num { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; color: var(--accent); }
+.stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+.filters-panel { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 20px; }
+.filters-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.filters-title { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+.btn-reset {
+  background: transparent; border: 1px solid var(--border); color: var(--muted);
+  padding: 6px 14px; border-radius: 6px; font-family: 'Barlow', sans-serif; font-size: 12px; cursor: pointer; transition: all 0.2s;
+}
+.btn-reset:hover, .btn-reset:active { border-color: var(--accent); color: var(--accent); }
+
+.filters-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+@media(min-width: 600px) { .filters-grid { grid-template-columns: repeat(3, 1fr); } }
+@media(min-width: 900px) { .filters-grid { grid-template-columns: repeat(4, 1fr); } }
+@media(min-width: 1200px) { .filters-grid { grid-template-columns: repeat(8, 1fr); } }
+
+.filter-group { display: flex; flex-direction: column; gap: 5px; }
+.filter-group.full-width { grid-column: span 2; }
+@media(min-width:600px) { .filter-group.full-width { grid-column: span 1; } }
+
+label { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+input[type="number"] {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text); padding: 9px 10px; font-family: 'Barlow', sans-serif; font-size: 13px;
+  width: 100%; transition: border-color 0.2s;
+}
+input[type="number"]:focus { outline: none; border-color: var(--accent); }
+/* MULTI-SELECT DROPDOWNS */
+.ms-wrap { position: relative; }
+.ms-btn {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text); padding: 9px 10px; font-family: 'Barlow', sans-serif; font-size: 13px;
+  width: 100%; text-align: left; cursor: pointer; transition: border-color 0.2s;
+  display: flex; justify-content: space-between; align-items: center; gap: 6px;
+  min-height: 38px; user-select: none;
+}
+.ms-btn:hover, .ms-btn.open { border-color: var(--accent); }
+.ms-btn-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-btn-arrow { color: var(--muted); font-size: 9px; flex-shrink: 0; transition: transform 0.2s; }
+.ms-btn.open .ms-btn-arrow { transform: rotate(180deg); }
+.ms-tag {
+  display: inline-block; background: var(--accent); color: #000; border-radius: 10px;
+  padding: 1px 7px; font-size: 10px; font-weight: 700; flex-shrink: 0;
+}
+.ms-dropdown {
+  display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: var(--surface2); border: 1px solid var(--accent); border-radius: 8px;
+  z-index: 999; max-height: 220px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  min-width: 160px;
+}
+.ms-dropdown.open { display: block; }
+.ms-search {
+  padding: 8px 10px; border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; background: var(--surface2); z-index: 1;
+}
+.ms-search input {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 5px;
+  color: var(--text); padding: 5px 8px; font-size: 12px; width: 100%; font-family: 'Barlow', sans-serif;
+}
+.ms-search input:focus { outline: none; border-color: var(--accent); }
+.ms-opt {
+  display: flex; align-items: center; gap: 8px; padding: 7px 12px;
+  cursor: pointer; font-size: 13px; transition: background 0.1s;
+}
+.ms-opt:hover { background: var(--surface); }
+.ms-opt input[type=checkbox] { accent-color: var(--accent); cursor: pointer; width: 14px; height: 14px; flex-shrink: 0; }
+.ms-opt label { cursor: pointer; flex: 1; }
+.ms-actions { padding: 6px 10px; border-top: 1px solid var(--border); display: flex; gap: 6px; }
+.ms-action-btn {
+  flex: 1; background: transparent; border: 1px solid var(--border); color: var(--muted);
+  padding: 4px 8px; border-radius: 5px; font-size: 11px; cursor: pointer; font-family: 'Barlow', sans-serif;
+}
+.ms-action-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.range-inputs { display: flex; gap: 5px; align-items: center; }
+.range-inputs input { flex: 1; }
+.range-sep { color: var(--muted); font-size: 11px; flex-shrink: 0; }
+
+.results-bar {
+  padding: 10px 20px; background: var(--bg); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+}
+.results-count { font-size: 13px; color: var(--muted); }
+.results-count strong { color: var(--accent); font-size: 15px; }
+.price-stats { display: flex; gap: 18px; justify-content: flex-end; align-items: center; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+.price-stat-item { display: flex; flex-direction: column; align-items: flex-end; }
+.price-stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+.price-stat-val { font-size: 15px; font-weight: 700; }
+.price-stat-val.min { color: #22c55e; }
+.price-stat-val.med { color: var(--accent); }
+.price-stat-val.max { color: #f87171; }
+.total-prix { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; color: var(--green); }
+
+/* TABLE DESKTOP */
+.table-wrap { overflow-x: auto; padding: 0 0 20px 0; }
+table { width: 100%; border-collapse: collapse; min-width: 700px; }
+thead th {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted);
+  padding: 11px 14px; text-align: left; border-bottom: 1px solid var(--border);
+  background: var(--surface); white-space: nowrap; cursor: pointer; user-select: none;
+}
+thead th:hover { color: var(--accent); }
+thead th.asc::after { content: ' ▲'; color: var(--accent); font-size: 9px; }
+thead th.desc::after { content: ' ▼'; color: var(--accent); font-size: 9px; }
+tbody tr { border-bottom: 1px solid #1a1e28; transition: background 0.12s; }
+tbody tr:hover { background: var(--surface2); }
+tbody td { padding: 10px 14px; font-size: 13px; vertical-align: middle; }
+.td-annee { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; color: var(--accent); }
+.td-marque { font-weight: 600; white-space: nowrap; }
+.td-modele { color: #9aa0b5; font-size: 12px; max-width: 220px; }
+.td-prix { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; color: var(--green); white-space: nowrap; }
+.td-km { color: var(--muted); white-space: nowrap; }
+.td-vin { font-family: monospace; font-size: 10px; color: #4a5266; }
+.badge {
+  display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+}
+.badge-mtl { background: #1a2f4a; color: #60a5fa; }
+.badge-qc { background: #1a3a2a; color: #4ade80; }
+.badge-couleur { background: #252836; color: var(--muted); }
+
+/* CARDS MOBILE */
+.cards-view { display: none; padding: 12px; }
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px; margin-bottom: 10px; transition: border-color 0.2s;
+}
+.card:active { border-color: var(--accent); }
+.card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.card-title { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; }
+.card-title .yr { color: var(--accent); margin-right: 6px; }
+.card-prix { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; color: var(--green); }
+.card-modele { font-size: 12px; color: #9aa0b5; margin-bottom: 10px; }
+.card-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.card-km { font-size: 12px; color: var(--muted); }
+.card-vin { font-family: monospace; font-size: 10px; color: #4a5266; }
+
+.no-results { text-align: center; padding: 60px 20px; color: var(--muted); }
+.no-results-icon { font-size: 48px; margin-bottom: 12px; }
+.no-results-text { font-size: 16px; }
+
+@media(max-width: 700px) {
+  .table-wrap { display: none; }
+  .cards-view { display: block; }
+}
+</style>
+</head>
+<body>
+<div id="loading-screen" style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0d0f14;color:#f59e0b;font-family:Barlow Condensed,sans-serif;font-size:24px;letter-spacing:2px;">
+  ⏳ Chargement des données...
+</div>
+<div id="app-content" style="display:none">
+
+<header>
+  <div class="logo">OPEN<span>LANE</span></div>
+  <div class="header-stats">
+    <div class="stat"><div class="stat-num" id="stat-total">1170</div><div class="stat-label">Véhicules</div></div>
+    <div class="stat"><div class="stat-num" id="stat-marques">—</div><div class="stat-label">Marques</div></div>
+    <div class="stat"><div class="stat-num" id="stat-total-val">—</div><div class="stat-label">Valeur totale</div></div>
+  </div>
+</header>
+
+<div class="filters-panel">
+  <div class="filters-header">
+    <div class="filters-title">🔍 Filtres</div>
+    <button class="btn-reset" onclick="resetFilters()">Réinitialiser</button>
+  </div>
+  <div class="filters-grid">
+    <div class="filter-group">
+      <label>Date</label>
+      <div class="ms-wrap" id="ms-date">
+        <button class="ms-btn" onclick="toggleDropdown('date')">
+          <span class="ms-btn-label" id="ms-label-date">Toutes</span>
+          <span class="ms-btn-arrow">▼</span>
+        </button>
+        <div class="ms-dropdown" id="ms-dd-date">
+          <div class="ms-opt"><input type="checkbox" id="cb-date-2026-02-25" value="2026-02-25" onchange="toggleOpt('date',this.value,this.checked)"><label for="cb-date-2026-02-25">25 fév. 2026 — Montréal</label></div>
+          <div class="ms-opt"><input type="checkbox" id="cb-date-2026-02-26" value="2026-02-26" onchange="toggleOpt('date',this.value,this.checked)"><label for="cb-date-2026-02-26">26 fév. 2026 — Québec</label></div>
+          <div class="ms-opt"><input type="checkbox" id="cb-date-2026-03-04" value="2026-03-04" onchange="toggleOpt('date',this.value,this.checked)"><label for="cb-date-2026-03-04">04 mars 2026 — Montréal</label></div>
+          <div class="ms-opt"><input type="checkbox" id="cb-date-2026-03-05" value="2026-03-05" onchange="toggleOpt('date',this.value,this.checked)"><label for="cb-date-2026-03-05">05 mars 2026 — Québec</label></div>
+          <div class="ms-actions">
+            <button class="ms-action-btn" onclick="selectAll('date')">Tout</button>
+            <button class="ms-action-btn" onclick="clearAll('date')">Aucun</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Ville</label>
+      <div class="ms-wrap" id="ms-ville">
+        <button class="ms-btn" onclick="toggleDropdown('ville')">
+          <span class="ms-btn-label" id="ms-label-ville">Toutes</span>
+          <span class="ms-btn-arrow">▼</span>
+        </button>
+        <div class="ms-dropdown" id="ms-dd-ville">
+          <div class="ms-opt"><input type="checkbox" id="cb-ville-Montreal" value="Montréal" onchange="toggleOpt('ville',this.value,this.checked)"><label for="cb-ville-Montreal">Montréal</label></div>
+          <div class="ms-opt"><input type="checkbox" id="cb-ville-Québec" value="Québec City" onchange="toggleOpt('ville',this.value,this.checked)"><label for="cb-ville-Québec">Québec City</label></div>
+          <div class="ms-actions">
+            <button class="ms-action-btn" onclick="selectAll('ville')">Tout</button>
+            <button class="ms-action-btn" onclick="clearAll('ville')">Aucun</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Année</label>
+      <div class="ms-wrap" id="ms-annee">
+        <button class="ms-btn" onclick="toggleDropdown('annee')">
+          <span class="ms-btn-label" id="ms-label-annee">Toutes</span>
+          <span class="ms-btn-arrow">▼</span>
+        </button>
+        <div class="ms-dropdown" id="ms-dd-annee">
+          <div class="ms-search"><input type="text" placeholder="Rechercher..." oninput="filterOpts('annee', this.value)"></div>
+          <div id="ms-opts-annee"></div>
+          <div class="ms-actions">
+            <button class="ms-action-btn" onclick="selectAll('annee')">Tout</button>
+            <button class="ms-action-btn" onclick="clearAll('annee')">Aucun</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Marque</label>
+      <div class="ms-wrap" id="ms-marque">
+        <button class="ms-btn" onclick="toggleDropdown('marque')">
+          <span class="ms-btn-label" id="ms-label-marque">Toutes</span>
+          <span class="ms-btn-arrow">▼</span>
+        </button>
+        <div class="ms-dropdown" id="ms-dd-marque">
+          <div class="ms-search"><input type="text" placeholder="Rechercher..." oninput="filterOpts('marque', this.value)"></div>
+          <div id="ms-opts-marque"></div>
+          <div class="ms-actions">
+            <button class="ms-action-btn" onclick="selectAll('marque')">Tout</button>
+            <button class="ms-action-btn" onclick="clearAll('marque')">Aucun</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Modèle</label>
+      <div class="ms-wrap" id="ms-modele">
+        <button class="ms-btn" onclick="toggleDropdown('modele')">
+          <span class="ms-btn-label" id="ms-label-modele">Tous</span>
+          <span class="ms-btn-arrow">▼</span>
+        </button>
+        <div class="ms-dropdown" id="ms-dd-modele">
+          <div class="ms-search"><input type="text" placeholder="Rechercher..." oninput="filterOpts('modele', this.value)"></div>
+          <div id="ms-opts-modele"></div>
+          <div class="ms-actions">
+            <button class="ms-action-btn" onclick="selectAll('modele')">Tout</button>
+            <button class="ms-action-btn" onclick="clearAll('modele')">Aucun</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Couleur</label>
+      <div class="ms-wrap" id="ms-couleur">
+        <button class="ms-btn" onclick="toggleDropdown('couleur')">
+          <span class="ms-btn-label" id="ms-label-couleur">Toutes</span>
+          <span class="ms-btn-arrow">▼</span>
+        </button>
+        <div class="ms-dropdown" id="ms-dd-couleur">
+          <div class="ms-search"><input type="text" placeholder="Rechercher..." oninput="filterOpts('couleur', this.value)"></div>
+          <div id="ms-opts-couleur"></div>
+          <div class="ms-actions">
+            <button class="ms-action-btn" onclick="selectAll('couleur')">Tout</button>
+            <button class="ms-action-btn" onclick="clearAll('couleur')">Aucun</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="filter-group full-width">
+      <label>Kilométrage (KM)</label>
+      <div class="range-inputs">
+        <input type="number" id="f-km-min" placeholder="Min" min="0" onchange="applyFilters()" oninput="applyFilters()">
+        <span class="range-sep">—</span>
+        <input type="number" id="f-km-max" placeholder="Max" min="0" onchange="applyFilters()" oninput="applyFilters()">
+      </div>
+    </div>
+    <div class="filter-group full-width">
+      <label>Prix ($)</label>
+      <div class="range-inputs">
+        <input type="number" id="f-prix-min" placeholder="Min" min="0" onchange="applyFilters()" oninput="applyFilters()">
+        <span class="range-sep">—</span>
+        <input type="number" id="f-prix-max" placeholder="Max" min="0" onchange="applyFilters()" oninput="applyFilters()">
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<div class="results-bar">
+  <div class="results-count"><strong id="count-display">0</strong> résultat(s)</div>
+  <div class="price-stats" id="price-stats-display" style="display:none">
+    <div class="price-stat-item">
+      <span class="price-stat-label">Min</span>
+      <span class="price-stat-val min" id="stat-prix-min">—</span>
+    </div>
+    <div class="price-stat-item">
+      <span class="price-stat-label">Médiane</span>
+      <span class="price-stat-val med" id="stat-prix-med">—</span>
+    </div>
+    <div class="price-stat-item">
+      <span class="price-stat-label">Max</span>
+      <span class="price-stat-val max" id="stat-prix-max">—</span>
+    </div>
+    <div class="price-stat-item" style="border-left:1px solid var(--border);padding-left:18px">
+      <span class="price-stat-label">Total</span>
+      <span class="price-stat-val" id="total-prix-display" style="color:var(--text)">—</span>
+    </div>
+  </div>
+</div>
+
+<!-- TABLE (desktop) -->
+<div class="table-wrap">
+  <table id="main-table">
+    <thead>
+      <tr>
+        <th onclick="sortBy('date')">Date</th>
+        <th onclick="sortBy('ville')">Ville</th>
+        <th onclick="sortBy('annee')">Année</th>
+        <th onclick="sortBy('marque')">Marque</th>
+        <th onclick="sortBy('modele')">Modèle</th>
+        <th onclick="sortBy('couleur')">Couleur</th>
+        <th onclick="sortBy('km')">Kilométrage</th>
+        <th>VIN</th>
+        <th onclick="sortBy('prix')">Prix</th>
+      </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+  <div class="no-results" id="no-results-table" style="display:none">
+    <div class="no-results-icon">🔍</div>
+    <div class="no-results-text">Aucun véhicule ne correspond aux filtres</div>
+  </div>
+</div>
+
+<!-- CARDS (mobile) -->
+<div class="cards-view" id="cards-view"></div>
+<div class="no-results" id="no-results-cards" style="display:none">
+  <div class="no-results-icon">🔍</div>
+  <div class="no-results-text">Aucun véhicule ne correspond aux filtres</div>
+</div>
+
+<script>
+// Data loaded from CSV
+let DATA = [];
+
+
+function populateAllFilters() {
+  // Populate dynamic filters: annee, marque, modele, couleur
+  const fields = ['annee', 'marque', 'modele', 'couleur'];
+  fields.forEach(field => {
+    const container = document.getElementById('ms-opts-' + field);
+    if (!container) return;
+    const vals = [...new Set(DATA.map(v => String(v[field])))].filter(Boolean).sort((a,b) => {
+      if (field === 'annee') return parseInt(a) - parseInt(b);
+      return a.localeCompare(b, 'fr');
+    });
+    container.innerHTML = vals.map(val =>
+      `<div class="ms-opt" data-val="${val}"><input type="checkbox" id="cb-${field}-${val}" value="${val}" onchange="toggleOpt('${field}',this.value,this.checked)"><label for="cb-${field}-${val}">${val}</label></div>`
+    ).join('');
+  });
+
+  // Populate date filter dynamically
+  const dateCont = document.getElementById('ms-dd-date');
+  if (dateCont) {
+    const months = ['','Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+    const dateVals = [...new Set(DATA.map(v => v.date))].filter(Boolean).sort();
+    // Get ville for each date (use most common)
+    const dateVille = {};
+    DATA.forEach(v => { if (!dateVille[v.date]) dateVille[v.date] = v.ville; });
+    const actionsDiv = dateCont.querySelector('.ms-actions');
+    // Remove existing ms-opt entries
+    dateCont.querySelectorAll('.ms-opt').forEach(el => el.remove());
+    const optHtml = dateVals.map(d => {
+      const [y,m,day] = d.split('-');
+      const label = `${parseInt(day)} ${months[parseInt(m)]}. ${y} — ${dateVille[d] || ''}`;
+      return `<div class="ms-opt" data-val="${d}"><input type="checkbox" id="cb-date-${d}" value="${d}" onchange="toggleOpt('date',this.value,this.checked)"><label for="cb-date-${d}">${label}</label></div>`;
+    }).join('');
+    actionsDiv.insertAdjacentHTML('beforebegin', optHtml);
+  }
+}
+
+async function loadCSV() {
+  try {
+    const resp = await fetch('vehicules.csv');
+    const text = await resp.text();
+    const lines = text.trim().split('\n');
+    const headers = lines[0].split(',');
+    DATA = lines.slice(1).map(line => {
+      // Handle commas inside quoted fields
+      const cols = [];
+      let cur = '', inQ = false;
+      for (let c of line) {
+        if (c === '"') { inQ = !inQ; }
+        else if (c === ',' && !inQ) { cols.push(cur); cur = ''; }
+        else { cur += c; }
+      }
+      cols.push(cur);
+      return {
+        date:    cols[0] || '',
+        ville:   cols[1] || '',
+        annee:   parseInt(cols[2]) || 0,
+        marque:  cols[3] || '',
+        modele:  cols[4] || '',
+        couleur: cols[5] || '',
+        km:      parseInt(cols[6]) || 0,
+        vin:     cols[7] || '',
+        prix:    parseInt(cols[8]) || 0
+      };
+    });
+    filtered = [...DATA];
+    populateAllFilters();
+    applyFilters();
+    document.getElementById('loading-screen').style.display = 'none';
+    document.getElementById('app-content').style.display = 'block';
+  } catch(e) {
+    document.getElementById('loading-screen').innerHTML = 
+      '<div style="color:#f87171;padding:40px;text-align:center">❌ Impossible de charger les données.<br><small>Assurez-vous que vehicules.csv est dans le même dossier.</small></div>';
+  }
+}
+
+let filtered = [...DATA];
+let sortCol = 'marque';
+let sortDir = 1;
+
+// Multi-select state
+const MS_FIELDS = ['date','ville','annee','marque','modele','couleur'];
+const msSelected = { date: new Set(), ville: new Set(), annee: new Set(), marque: new Set(), modele: new Set(), couleur: new Set() };
+
+function fmt(n) { return n ? n.toLocaleString('fr-CA') : '—'; }
+function fmtPrix(n) { return n ? '$' + n.toLocaleString('fr-CA') : '—'; }
+function fmtDate(d) {
+  if (!d) return '';
+  const [y,m,day] = d.split('-');
+  const months = ['','Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+  return `${parseInt(day)} ${months[parseInt(m)]} ${y}`;
+}
+
+// Close dropdowns on outside click
+document.addEventListener('click', (e) => {
+  MS_FIELDS.forEach(f => {
+    const wrap = document.getElementById('ms-' + f);
+    if (wrap && !wrap.contains(e.target)) {
+      document.getElementById('ms-dd-' + f)?.classList.remove('open');
+      wrap.querySelector('.ms-btn')?.classList.remove('open');
+    }
+  });
+});
+
+function toggleDropdown(field) {
+  const dd = document.getElementById('ms-dd-' + field);
+  const btn = document.getElementById('ms-' + field).querySelector('.ms-btn');
+  const isOpen = dd.classList.contains('open');
+  MS_FIELDS.forEach(f => {
+    document.getElementById('ms-dd-' + f)?.classList.remove('open');
+    document.getElementById('ms-' + f)?.querySelector('.ms-btn')?.classList.remove('open');
+  });
+  if (!isOpen) { dd.classList.add('open'); btn.classList.add('open'); }
+}
+
+function buildOpts(field, vals) {
+  const container = document.getElementById('ms-opts-' + field);
+  if (!container) return;
+  container.innerHTML = '';
+  vals.forEach(v => {
+    const div = document.createElement('div');
+    div.className = 'ms-opt';
+    div.dataset.val = String(v);
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.id = 'cb-' + field + '-' + String(v).replace(/[^a-z0-9]/gi, '_');
+    cb.value = v;
+    cb.checked = msSelected[field].has(String(v));
+    cb.onchange = () => { toggleOpt(field, String(v), cb.checked); };
+    const lbl = document.createElement('label');
+    lbl.htmlFor = cb.id;
+    lbl.textContent = v;
+    div.appendChild(cb); div.appendChild(lbl);
+    container.appendChild(div);
+  });
+}
+
+function filterOpts(field, query) {
+  const container = document.getElementById('ms-opts-' + field);
+  if (!container) return;
+  const q = query.toLowerCase();
+  container.querySelectorAll('.ms-opt').forEach(opt => {
+    opt.style.display = opt.dataset.val.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+function toggleOpt(field, val, checked) {
+  if (checked) msSelected[field].add(val);
+  else msSelected[field].delete(val);
+  updateLabel(field);
+  if (field === 'marque') rebuildModeles();
+  applyFilters();
+}
+
+function selectAll(field) {
+  const container = document.getElementById('ms-opts-' + field) || document.getElementById('ms-dd-' + field);
+  container?.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.checked = true; msSelected[field].add(String(cb.value)); });
+  updateLabel(field);
+  applyFilters();
+}
+
+function clearAll(field) {
+  msSelected[field].clear();
+  const container = document.getElementById('ms-opts-' + field) || document.getElementById('ms-dd-' + field);
+  container?.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.checked = false; });
+  updateLabel(field);
+  if (field === 'marque') rebuildModeles();
+  applyFilters();
+}
+
+function updateLabel(field) {
+  const sel = msSelected[field];
+  const lbl = document.getElementById('ms-label-' + field);
+  const btn = document.getElementById('ms-' + field)?.querySelector('.ms-btn');
+  btn?.querySelector('.ms-tag')?.remove();
+  const defaults = {date:'Toutes',ville:'Toutes',annee:'Toutes',marque:'Toutes',modele:'Tous',couleur:'Toutes'};
+  if (sel.size === 0) {
+    lbl.textContent = defaults[field];
+  } else if (sel.size === 1) {
+    lbl.textContent = [...sel][0];
+  } else {
+    lbl.textContent = 'Sélection';
+    const tag = document.createElement('span');
+    tag.className = 'ms-tag';
+    tag.textContent = sel.size;
+    btn.appendChild(tag);
+  }
+}
+
+function populateSelects() {
+  const annees = [...new Set(DATA.map(v => v.annee))].sort((a,b) => b - a);
+  const marques = [...new Set(DATA.map(v => v.marque))].sort();
+  const couleurs = [...new Set(DATA.map(v => v.couleur))].sort();
+  const modeles = [...new Set(DATA.map(v => v.modele))].sort();
+  buildOpts('annee', annees);
+  buildOpts('marque', marques);
+  buildOpts('couleur', couleurs);
+  buildOpts('modele', modeles);
+}
+
+function rebuildModeles() {
+  const selectedMarques = msSelected['marque'];
+  const source = selectedMarques.size > 0 ? DATA.filter(v => selectedMarques.has(v.marque)) : DATA;
+  const modeles = [...new Set(source.map(v => v.modele))].sort();
+  msSelected['modele'].forEach(m => { if (!modeles.includes(m)) msSelected['modele'].delete(m); });
+  buildOpts('modele', modeles);
+  updateLabel('modele');
+}
+
+function applyFilters() {
+  const kmMin = parseFloat(document.getElementById('f-km-min').value) || 0;
+  const kmMax = parseFloat(document.getElementById('f-km-max').value) || Infinity;
+  const prixMin = parseFloat(document.getElementById('f-prix-min').value) || 0;
+  const prixMax = parseFloat(document.getElementById('f-prix-max').value) || Infinity;
+
+  filtered = DATA.filter(v =>
+    (msSelected.date.size === 0 || msSelected.date.has(v.date)) &&
+    (msSelected.ville.size === 0 || msSelected.ville.has(v.ville)) &&
+    (msSelected.annee.size === 0 || msSelected.annee.has(String(v.annee))) &&
+    (msSelected.marque.size === 0 || msSelected.marque.has(v.marque)) &&
+    (msSelected.modele.size === 0 || msSelected.modele.has(v.modele)) &&
+    (msSelected.couleur.size === 0 || msSelected.couleur.has(v.couleur)) &&
+    (v.km >= kmMin && v.km <= kmMax) &&
+    (v.prix >= prixMin && v.prix <= prixMax)
+  );
+
+  sortData();
+  render();
+}
+
+function resetFilters() {
+  MS_FIELDS.forEach(f => {
+    msSelected[f].clear();
+    const c = document.getElementById('ms-opts-' + f) || document.getElementById('ms-dd-' + f);
+    c?.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = false);
+    updateLabel(f);
+  });
+  document.getElementById('f-km-min').value = '';
+  document.getElementById('f-km-max').value = '';
+  document.getElementById('f-prix-min').value = '';
+  document.getElementById('f-prix-max').value = '';
+  rebuildModeles();
+  applyFilters();
+}
+
+function sortBy(col) {
+  if (sortCol === col) sortDir *= -1;
+  else { sortCol = col; sortDir = 1; }
+  sortData();
+  render();
+  document.querySelectorAll('thead th').forEach(th => th.classList.remove('asc','desc'));
+  const cols = ['date','ville','annee','marque','modele','couleur','km','vin','prix'];
+  const idx = cols.indexOf(col);
+  if (idx >= 0) {
+    const ths = document.querySelectorAll('thead th');
+    ths[idx].classList.add(sortDir === 1 ? 'asc' : 'desc');
+  }
+}
+
+function sortData() {
+  if (sortCol === 'marque') {
+    filtered.sort((a, b) => {
+      // 1. Marque A→Z
+      const ma = a.marque.toLowerCase(), mb = b.marque.toLowerCase();
+      if (ma !== mb) return ma < mb ? -1 : 1;
+      // 2. 1er mot du modèle A→Z
+      const mo1a = (a.modele.split(' ')[0] || '').toLowerCase();
+      const mo1b = (b.modele.split(' ')[0] || '').toLowerCase();
+      if (mo1a !== mo1b) return mo1a < mo1b ? -1 : 1;
+      // 3. Année du plus ancien au plus récent
+      if (a.annee !== b.annee) return a.annee - b.annee;
+      // 4. 2e mot du modèle A→Z
+      const mo2a = (a.modele.split(' ')[1] || '').toLowerCase();
+      const mo2b = (b.modele.split(' ')[1] || '').toLowerCase();
+      if (mo2a !== mo2b) return mo2a < mo2b ? -1 : 1;
+      return 0;
+    });
+  } else {
+    filtered.sort((a, b) => {
+      let va = a[sortCol], vb = b[sortCol];
+      if (typeof va === 'string') va = va.toLowerCase();
+      if (typeof vb === 'string') vb = vb.toLowerCase();
+      if (va < vb) return -sortDir;
+      if (va > vb) return sortDir;
+      return 0;
+    });
+  }
+}
+
+function render() {
+  const total = filtered.length;
+  const totalPrix = filtered.reduce((s, v) => s + (v.prix || 0), 0);
+  const marques = new Set(filtered.map(v => v.marque)).size;
+
+  document.getElementById('count-display').textContent = total;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-marques').textContent = marques;
+  document.getElementById('stat-total-val').textContent = totalPrix >= 1000000
+    ? '$' + (totalPrix/1000000).toFixed(1) + 'M'
+    : '$' + Math.round(totalPrix/1000) + 'k';
+  const statsDiv = document.getElementById('price-stats-display');
+  if (total > 0) {
+    const prices = filtered.map(v => v.prix || 0).filter(p => p > 0).sort((a,b) => a - b);
+    const pMin = prices[0] || 0;
+    const pMax = prices[prices.length - 1] || 0;
+    const mid = Math.floor(prices.length / 2);
+    const pMed = prices.length % 2 === 0
+      ? Math.round((prices[mid-1] + prices[mid]) / 2)
+      : prices[mid];
+    document.getElementById('stat-prix-min').textContent = fmtPrix(pMin);
+    document.getElementById('stat-prix-med').textContent = fmtPrix(pMed);
+    document.getElementById('stat-prix-max').textContent = fmtPrix(pMax);
+    document.getElementById('total-prix-display').textContent = fmtPrix(totalPrix);
+    statsDiv.style.display = 'flex';
+  } else {
+    statsDiv.style.display = 'none';
+  }
+
+  // TABLE
+  const tbody = document.getElementById('table-body');
+  tbody.innerHTML = '';
+  filtered.forEach(v => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${fmtDate(v.date)}</td>
+      <td><span class="badge ${v.ville === 'Montréal' ? 'badge-mtl' : 'badge-qc'}">${v.ville}</span></td>
+      <td class="td-annee">${v.annee}</td>
+      <td class="td-marque">${v.marque}</td>
+      <td class="td-modele">${v.modele}</td>
+      <td><span class="badge badge-couleur">${v.couleur}</span></td>
+      <td class="td-km">${fmt(v.km)} km</td>
+      <td class="td-vin">${v.vin || '—'}</td>
+      <td class="td-prix">${fmtPrix(v.prix)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('no-results-table').style.display = total === 0 ? 'block' : 'none';
+
+  // CARDS
+  const cards = document.getElementById('cards-view');
+  cards.innerHTML = '';
+  filtered.forEach(v => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `
+      <div class="card-top">
+        <div class="card-title"><span class="yr">${v.annee}</span>${v.marque}</div>
+        <div class="card-prix">${fmtPrix(v.prix)}</div>
+      </div>
+      <div class="card-modele">${v.modele}</div>
+      <div class="card-meta">
+        <span class="badge ${v.ville === 'Montréal' ? 'badge-mtl' : 'badge-qc'}">${v.ville}</span>
+        <span class="badge badge-couleur">${v.couleur}</span>
+        <span class="card-km">${fmt(v.km)} km</span>
+        <span class="card-vin">${v.vin || ''}</span>
+      </div>
+    `;
+    cards.appendChild(div);
+  });
+  document.getElementById('no-results-cards').style.display = total === 0 ? 'block' : 'none';
+}
+
+// init
+populateSelects();
+applyFilters();
+
+window.onload = function() { loadCSV(); };
+</script>
+</div>
+</body>
+</html>

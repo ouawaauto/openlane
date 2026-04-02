@@ -221,7 +221,7 @@ tbody td { padding: 9px 12px; font-size: 12px; vertical-align: middle; }
       <div class="param-label">Ville</div>
       <select class="param-select" id="param-ville">
         <option value="Montréal">Montréal</option>
-        <option value="Québec City">Québec City</option>
+        <option value="Québec">Québec</option>
       </select>
     </div>
   </div>
@@ -574,9 +574,9 @@ Exemple: [{"annee":2021,"marque":"MAZDA","modele":"MAZDA3 GT","couleur":"BLACK",
     date,
     ville,
     annee: parseInt(v.annee) || 0,
-    marque: String(v.marque || '').toUpperCase().trim(),
-    modele: String(v.modele || '').toUpperCase().trim(),
-    couleur: String(v.couleur || '').toUpperCase().trim(),
+    marque: toTitleCase(String(v.marque || '').trim()),
+    modele: toTitleCase(String(v.modele || '').trim()),
+    couleur: toTitleCase(String(v.couleur || '').trim()),
     km: parseInt(String(v.km).replace(/[^0-9]/g, '')) || 0,
     vin: (!v.vin || v.vin === 'NOVIN' || v.vin.length < 10)
       ? 'NOVIN-' + Math.random().toString(16).slice(2, 10).toUpperCase()
@@ -668,6 +668,10 @@ function clearResults() {
 }
 
 // ─── UTILITAIRES ─────────────────────────────────────────────────────────────
+function toTitleCase(str) {
+  return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 function fmtDate(d) {
